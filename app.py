@@ -1,200 +1,203 @@
-# app.py — Dashboard interactivo: Análisis de Nomofobia y Dependencia al Smartphone (Versión Final 2025)
+# app.py — Dashboard final y profesional con portada animada y modo defensa
+# Autor: Johann Smith Rivera & Julian Mateo Valderrama
+# Materia: Estadística No Paramétrica — Universidad Santo Tomás
+# Profesor: Javier Sierra
+# Título mostrado: "Análisis de Nomofobia y Dependencia al Smartphone"
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import seaborn as sns
-import matplotlib.pyplot as plt
 from scipy import stats
+import plotly.express as px
+import plotly.graph_objects as go
 import scikit_posthocs as sp
 from pathlib import Path
+import io
+import math
+import random
 
-# -------------------- METADATOS --------------------
+# -------------------- Metadatos --------------------
 AUTHORS = "Johann Smith Rivera & Julian Mateo Valderrama"
 COURSE = "Estadística No Paramétrica"
 UNIVERSITY = "Universidad Santo Tomás"
 PROF = "Javier Sierra"
 YEAR = "2025"
 
-# -------------------- CONFIGURACIÓN DE PÁGINA --------------------
+# -------------------- Configuración de página --------------------
 st.set_page_config(
     page_title="Análisis de Nomofobia y Dependencia al Smartphone",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
 )
 
-# -------------------- ESTILO GLOBAL --------------------
-st.markdown("""
+# -------------------- Portada animada beige --------------------
+if "started" not in st.session_state:
+    st.session_state.started = False
+if "defense_mode" not in st.session_state:
+    st.session_state.defense_mode = False
+
+if not st.session_state.started:
+    st.markdown("""
     <style>
-    /* Fondo suave */
-    .stApp {
-        background-color: #fff8e7; /* amarillo pastel claro */
-        color: #1e1e1e;
-    }
-    /* Encabezado y logo */
-    .logo-container {
+    body {
+        background: linear-gradient(-45deg, #f5ecd7, #fdf8ee, #f7e9c4, #f5ecd7);
+        background-size: 400% 400%;
+        animation: gradientFlow 12s ease infinite;
+        color: #2b2b2b;
+        font-family: 'Segoe UI', sans-serif;
         text-align: center;
-        animation: fadeIn 2s ease-in;
-        margin-bottom: 0px;
     }
-    @keyframes fadeIn {
-        from {opacity: 0;}
-        to {opacity: 1;}
+    @keyframes gradientFlow {
+        0% {background-position: 0% 50%;}
+        50% {background-position: 100% 50%;}
+        100% {background-position: 0% 50%;}
     }
-    .title-block {
-        text-align: center;
-        padding: 0px 20px 10px 20px;
-        border-bottom: 3px solid #0F4C81;
+    .title {
+        font-size: 2.2em;
+        font-weight: 700;
+        color: #2b2b2b;
+        margin-top: 1.8em;
     }
-    h1, h2, h3 {
-        color: #0F4C81 !important;
+    .subtitle {
+        font-size: 1.15em;
+        color: #5a5a5a;
+        margin-bottom: 2em;
     }
-    .metric-container {
-        background-color: #fffaf0;
+    .start-btn {
+        background-color: #003366;
+        color: #fdf8ee;
+        font-weight: 600;
         border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        padding: 0.8em 2.5em;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1em;
+        transition: 0.4s ease;
+    }
+    .start-btn:hover {
+        background-color: #1a4470;
+        transform: scale(1.05);
     }
     </style>
+    """, unsafe_allow_html=True)
+
+    logo_path = Path("logo.png")
+    if logo_path.exists():
+        st.image(str(logo_path), width=220)
+    else:
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown('<div class="title">Universidad Santo Tomás</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">Facultad de Psicología<br>Estadística No Paramétrica — 2025</div>', unsafe_allow_html=True)
+    st.markdown('<br><br>', unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("🚀 Empezar análisis", key="start_btn"):
+            st.session_state.started = True
+            st.experimental_rerun()
+    st.stop()
+
+# -------------------- Modo Defensa Académica --------------------
+st.markdown("""
+<style>
+.main {background-color: #fdf8ee !important;}
+header, footer {visibility: hidden;}
+</style>
 """, unsafe_allow_html=True)
 
-# -------------------- LOGO --------------------
+if st.sidebar.checkbox("Activar modo Defensa Académica (pantalla limpia)"):
+    st.session_state.defense_mode = True
+
+if st.session_state.defense_mode:
+    hide_style = """
+    <style>
+    [data-testid="stSidebar"], header, footer {visibility: hidden;}
+    .main {
+        background-color: #fdf8ee !important;
+        padding-top: 1em;
+    }
+    .fixed-logo {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        opacity: 0.3;
+        width: 130px;
+        z-index: 100;
+    }
+    </style>
+    """
+    st.markdown(hide_style, unsafe_allow_html=True)
+    logo_path = Path("logo.png")
+    if logo_path.exists():
+        st.markdown(f'<img src="{logo_path}" class="fixed-logo">', unsafe_allow_html=True)
+
+# -------------------- Header con logo --------------------
 logo_path = Path("logo.png")
-
-if logo_path.exists():
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image(str(logo_path), width=160)
-    st.markdown('</div>', unsafe_allow_html=True)
-else:
-    uploaded_logo = st.sidebar.file_uploader("📁 Sube el logo institucional (PNG o SVG)", type=["png", "svg"])
-    if uploaded_logo:
-        st.image(uploaded_logo, width=160)
-
-# -------------------- ENCABEZADO --------------------
-st.markdown(f"""
-<div class="title-block">
-    <h1>📊 Análisis de Nomofobia y Dependencia al Smartphone</h1>
-    <p><strong>{UNIVERSITY}</strong> — {COURSE}<br>
-    Profesor: {PROF} | Autores: {AUTHORS} | {YEAR}</p>
-</div>
-""", unsafe_allow_html=True)
+logo_shown = False
+with st.container():
+    cols = st.columns([0.12, 0.88])
+    if logo_path.exists():
+        cols[0].image(str(logo_path), use_column_width=True)
+        logo_shown = True
+    else:
+        uploaded_logo = st.sidebar.file_uploader("Sube el logo de la universidad (opcional) — PNG/SVG", type=["png", "svg"])
+        if uploaded_logo is not None:
+            cols[0].image(uploaded_logo, use_column_width=True)
+            logo_shown = True
+    cols[1].markdown(f"# Análisis de Nomofobia y Dependencia al Smartphone")
+    cols[1].markdown(f"**{UNIVERSITY} — {COURSE}**  • Profesor: {PROF}")
+    cols[1].markdown(f"**Autores:** {AUTHORS}  • {YEAR}")
 
 st.caption("Dashboard nomofobia | Estadística No Paramétrica | Johann Rivera & Julian Valderrama | 2025")
 st.markdown("---")
 
 # -------------------- CARGA DE DATOS --------------------
-file_path = "DATOS REALES.xlsx"
-df = pd.read_excel(file_path)
+@st.cache_data
+def load_data(path="DATOS REALES.xlsx"):
+    df = pd.read_excel(path)
+    df.columns = df.columns.str.strip()
+    if "Sexo" in df.columns:
+        df["Sexo"] = df["Sexo"].astype(str).str.strip()
+    if "Estrato" in df.columns:
+        df["Estrato"] = df["Estrato"].astype(str).str.strip()
+    if "Nomofobia?" in df.columns:
+        df["Nomofobia?"] = df["Nomofobia?"].astype(str).str.strip()
+    for col in ["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima", "Edad", "Mal_uso"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
 
-# Limpieza básica
-df.columns = df.columns.str.strip()
-df["Sexo"] = df["Sexo"].astype(str).str.strip()
-df["Nomofobia?"] = df["Nomofobia?"].astype(str).str.strip()
-df["Estrato"] = df["Estrato"].astype(str).str.strip()
-df = df.dropna(subset=["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"])
+try:
+    df = load_data()
+except Exception:
+    st.error("No se pudo leer DATOS REALES.xlsx desde la carpeta del repo. Usa el uploader en la barra lateral para subir el Excel.")
+    uploaded_file = st.sidebar.file_uploader("Sube DATOS REALES.xlsx (si no está en repo)", type=["xlsx"])
+    if uploaded_file:
+        df = pd.read_excel(uploaded_file)
+    else:
+        st.stop()
 
-# -------------------- DESCRIPTIVAS --------------------
-st.header("📈 Descripción general del estudio")
+# -------------------- SIDEBAR --------------------
+st.sidebar.header("Parámetros de la visualización")
+sexo_options = df["Sexo"].dropna().unique().tolist() if "Sexo" in df.columns else []
+estrato_options = df["Estrato"].dropna().unique().tolist() if "Estrato" in df.columns else []
+nomob_options = df["Nomofobia?"].dropna().unique().tolist() if "Nomofobia?" in df.columns else []
 
-st.markdown("""
-Este estudio busca analizar la **nomofobia** (miedo a estar sin teléfono móvil) y su relación con variables
-como las **horas de uso del smartphone**, la **ansiedad social**, la **autoestima**, el **sexo** y el **estrato socioeconómico**.
-Se aplican métodos de estadística **no paramétrica** para evaluar dependencias y diferencias entre grupos.
-""")
+sexo_sel = st.sidebar.multiselect("Sexo", options=sexo_options, default=sexo_options if sexo_options else None)
+estrato_sel = st.sidebar.multiselect("Estrato", options=estrato_options, default=estrato_options if estrato_options else None)
+nomob_sel = st.sidebar.multiselect("Nomofobia? (Sí/No)", options=nomob_options, default=nomob_options if nomob_options else None)
 
-col1, col2 = st.columns(2)
-with col1:
-    st.metric("📱 Muestra total", len(df))
-    st.metric("👩‍🎓 Mujeres", (df["Sexo"] == "Mujer").sum())
-with col2:
-    st.metric("👨‍🎓 Hombres", (df["Sexo"] == "Hombre").sum())
-    st.metric("📊 Estratos únicos", df["Estrato"].nunique())
+show_normality = st.sidebar.checkbox("Mostrar pruebas de normalidad", value=False)
+show_density = st.sidebar.checkbox("Mostrar densidades (violines)", value=True)
+bootstrap_spearman = st.sidebar.checkbox("Bootstrapped CI para Spearman (1000 resamples)", value=True)
 
-st.dataframe(df.describe(), use_container_width=True)
+# -------------------- FILTROS --------------------
+df_f = df.copy()
+if sexo_options and sexo_sel:
+    df_f = df_f[df_f["Sexo"].isin(sexo_sel)]
+if estrato_options and estrato_sel:
+    df_f = df_f[df_f["Estrato"].isin(estrato_sel)]
+if nomob_options and nomob_sel:
+    df_f = df_f[df_f["Nomofobia?"].isin(nomob_sel)]
 
-# -------------------- ANÁLISIS DE CORRELACIONES --------------------
-st.header("🔗 Correlaciones de Spearman")
-
-corr_vars = ["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"]
-corr = df[corr_vars].corr(method="spearman")
-
-fig_corr, ax = plt.subplots(figsize=(7, 5))
-sns.heatmap(corr, annot=True, cmap="YlGnBu", center=0, fmt=".2f", ax=ax)
-st.pyplot(fig_corr)
-
-st.markdown("""
-Las correlaciones muestran cómo las variables se relacionan de forma **monótona**.
-Se observa si mayores horas de uso se asocian con mayor nomofobia o niveles de ansiedad social.
-""")
-
-# -------------------- EXPLORADOR INTERACTIVO #1 --------------------
-st.subheader("🎛️ Explorador de relaciones bivariadas")
-x_var = st.selectbox("Variable en el eje X", corr_vars, index=0)
-y_var = st.selectbox("Variable en el eje Y", corr_vars, index=1)
-color_var = st.selectbox("Color según variable", ["Sexo", "Nomofobia?", "Estrato"], index=0)
-
-fig = px.scatter(
-    df, x=x_var, y=y_var, color=color_var, trendline="ols",
-    hover_data=["Sexo", "Estrato", "Ansiedad_social", "Autoestima"],
-    labels={x_var: x_var, y_var: y_var},
-    title=f"Relación entre {x_var} y {y_var} según {color_var}"
-)
-st.plotly_chart(fig, use_container_width=True)
-
-# -------------------- PRUEBAS NO PARAMÉTRICAS --------------------
-st.header("📊 Pruebas No Paramétricas")
-
-st.subheader("Mann-Whitney U — Diferencias por sexo o grupo de nomofobia")
-
-mwu1 = stats.mannwhitneyu(
-    df.loc[df["Nomofobia?"] == "Sí", "Horas_Uso"],
-    df.loc[df["Nomofobia?"] == "No", "Horas_Uso"]
-)
-mwu2 = stats.mannwhitneyu(
-    df.loc[df["Sexo"] == "Hombre", "Horas_Uso"],
-    df.loc[df["Sexo"] == "Mujer", "Horas_Uso"]
-)
-
-st.write(f"**Horas de uso según Nomofobia:** p = {mwu1.pvalue:.4f}")
-st.write(f"**Horas de uso según Sexo:** p = {mwu2.pvalue:.4f}")
-
-# -------------------- KRUSKAL-WALLIS --------------------
-st.subheader("Kruskal-Wallis — Diferencias por Estrato")
-
-kw1 = stats.kruskal(*[g["Nomofobia"].values for _, g in df.groupby("Estrato")])
-st.write(f"**Nomofobia según Estrato:** H = {kw1.statistic:.3f}, p = {kw1.pvalue:.4f}")
-
-fig_kw = px.box(df, x="Estrato", y="Nomofobia", color="Estrato",
-                title="Distribución de Nomofobia por Estrato Socioeconómico")
-st.plotly_chart(fig_kw, use_container_width=True)
-
-# -------------------- POST-HOC (DUNN) --------------------
-st.subheader("Prueba Post-Hoc de Dunn (con corrección Bonferroni)")
-
-dunn = sp.posthoc_dunn(df, val_col="Nomofobia", group_col="Estrato", p_adjust="bonferroni")
-st.dataframe(dunn.style.background_gradient(cmap="YlOrRd", axis=None))
-
-# -------------------- EXPLORADOR INTERACTIVO #2 --------------------
-st.subheader("🧭 Explorador interactivo de variables categóricas")
-
-cat_x = st.selectbox("Variable categórica", ["Sexo", "Nomofobia?", "Estrato"])
-num_y = st.selectbox("Variable numérica", ["Nomofobia", "Horas_Uso", "Ansiedad_social", "Autoestima"])
-
-fig2 = px.box(df, x=cat_x, y=num_y, color=cat_x,
-              title=f"Distribución de {num_y} según {cat_x}")
-st.plotly_chart(fig2, use_container_width=True)
-
-# -------------------- CONCLUSIONES --------------------
-st.header("📘 Conclusiones")
-
-st.markdown("""
-- **La nomofobia se asocia significativamente** con el número de horas de uso diario del smartphone.
-- Los **niveles de ansiedad social** tienden a aumentar con la **dependencia al móvil**.
-- Existen **diferencias significativas entre estratos**, confirmadas mediante **Kruskal-Wallis y Dunn post hoc**.
-- El análisis sugiere que el **estrato medio y alto** presentan niveles ligeramente más altos de nomofobia,
-  posiblemente asociados con mayor acceso tecnológico.
-- No se hallaron diferencias marcadas por sexo en el uso promedio del teléfono.
-- Los resultados confirman la **utilidad de los métodos no paramétricos** en muestras sociales con distribución no normal.
-""")
-st.caption("Dashboard nomofobia | Estadística No Paramétrica | Johann Rivera & Julian Valderrama | 2025")
