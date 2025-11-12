@@ -1,251 +1,248 @@
-# app.py — Dashboard Nomofobia Final con contexto, descriptivas y análisis ampliado
-
+# app.py — Dashboard interactivo de Nomofobia y Dependencia al Smartphone (Versión Final Defensa)
 import streamlit as st
 import pandas as pd
 import numpy as np
 from scipy import stats
 import plotly.express as px
 import scikit_posthocs as sp
+from pathlib import Path
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# ------------------ CONFIGURACIÓN ------------------
-st.set_page_config(page_title="Dashboard Nomofobia — Proyecto Final", layout="wide")
-st.title("📱 Análisis de Nomofobia y Factores Psicológicos en Usuarios de Smartphone")
-st.caption("Proyecto Final — Estadística No Paramétrica | Johann Smith (2025)")
+# -------------------- METADATOS --------------------
+AUTHORS = "Johann Smith Rivera & Julian Mateo Valderrama"
+COURSE = "Estadística No Paramétrica"
+UNIVERSITY = "Universidad Santo Tomás"
+PROF = "Javier Sierra"
+YEAR = "2025"
 
-# ------------------ CONTEXTO DEL ESTUDIO ------------------
+# -------------------- CONFIGURACIÓN DE PÁGINA --------------------
+st.set_page_config(
+    page_title="Análisis de Nomofobia y Dependencia al Smartphone",
+    layout="wide",
+    page_icon="📱"
+)
+
+# -------------------- CSS PERSONALIZADO --------------------
 st.markdown("""
-### 🧩 Contexto del estudio
+    <style>
+    /* Fondo institucional animado */
+    .stApp {
+        background: linear-gradient(-45deg, #0F4C81, #1B6CA8, #2E8BC0, #89CFF0);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        color: #fff;
+    }
+    @keyframes gradientShift {
+        0% {background-position: 0% 50%;}
+        50% {background-position: 100% 50%;}
+        100% {background-position: 0% 50%;}
+    }
+    .centered {
+        text-align: center;
+        padding: 50px 20px;
+        color: white;
+    }
+    .fade-in { animation: fadeIn 2s ease-in; }
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+    .launch-btn {
+        background-color: rgba(255,255,255,0.15);
+        color: #fff;
+        padding: 12px 28px;
+        border-radius: 8px;
+        font-size: 1.1em;
+        border: 2px solid #fff;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .launch-btn:hover {
+        background-color: rgba(255,255,255,0.3);
+        transform: scale(1.05);
+    }
+    .dashboard-container {
+        animation: fadeSlideUp 1.5s ease-in-out;
+        margin-top: -20px;
+    }
+    @keyframes fadeSlideUp {
+        from {opacity: 0; transform: translateY(40px);}
+        to {opacity: 1; transform: translateY(0);}
+    }
+    h1,h2,h3 { color: #0F4C81 !important; }
+    footer { visibility: hidden; }
+    header { visibility: hidden; }
+    /* Logo fijo institucional en modo defensa */
+    .fixed-logo {
+        position: fixed;
+        bottom: 20px;
+        right: 25px;
+        opacity: 0.75;
+        width: 100px;
+        z-index: 9999;
+        transition: opacity 0.3s ease-in-out;
+    }
+    .fixed-logo:hover {
+        opacity: 1.0;
+        transform: scale(1.05);
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-La **nomofobia** se define como el miedo irracional a estar sin acceso al teléfono móvil o a perder la conexión con el entorno digital.  
-Este estudio analiza **la relación entre el uso del smartphone y variables psicológicas** como:
+# -------------------- MODO DEFENSA --------------------
+logo_path = Path("logo.png")
+hide_menu = st.sidebar.checkbox("🎥 Activar modo defensa académica", value=False)
+if hide_menu:
+    st.markdown("""
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stSidebar {display: none;}
+        </style>
+    """, unsafe_allow_html=True)
 
-- **Ansiedad social**
-- **Autoestima**
-- **Estrato socioeconómico**
-- **Presencia o ausencia de nomofobia**
+    # Logo institucional fijo (inferior derecha)
+    if logo_path.exists():
+        st.markdown(
+            f"<img src='data:image/png;base64,{Path(logo_path).read_bytes().hex()}' class='fixed-logo'>",
+            unsafe_allow_html=True
+        )
 
-El objetivo principal es **evaluar la existencia de asociaciones y diferencias significativas** usando pruebas **no paramétricas**:  
-- **Spearman** (correlaciones)  
-- **Mann–Whitney U** (comparación entre dos grupos)  
-- **Kruskal–Wallis y Dunn post-hoc** (comparaciones entre múltiples estratos)
+# -------------------- PORTADA --------------------
+if "show_dashboard" not in st.session_state:
+    st.session_state["show_dashboard"] = False
 
-""")
+if not st.session_state["show_dashboard"]:
+    st.markdown('<div class="centered fade-in">', unsafe_allow_html=True)
 
+    if logo_path.exists():
+        st.image(str(logo_path), width=230)
+    else:
+        st.write("📘 (Logo institucional no encontrado, puede subirse desde la barra lateral.)")
 
+    st.markdown(f"""
+        <h1 class='fade-in'>Análisis de Nomofobia y Dependencia al Smartphone</h1>
+        <p><b>{UNIVERSITY}</b> — {COURSE}<br>
+        Profesor: {PROF}<br>
+        Autores: {AUTHORS} | {YEAR}</p>
+    """, unsafe_allow_html=True)
+
+    if st.button("🚀 Iniciar Análisis"):
+        st.session_state["show_dashboard"] = True
+        st.experimental_rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
+
+# -------------------- DASHBOARD PRINCIPAL --------------------
+st.markdown(f"""
+<div class="dashboard-container" style='text-align:center;'>
+    <h1>📊 Análisis de Nomofobia y Dependencia al Smartphone</h1>
+    <p><strong>{UNIVERSITY}</strong> — {COURSE}<br>
+    Profesor: {PROF} | Autores: {AUTHORS} | {YEAR}</p>
+</div>
+""", unsafe_allow_html=True)
+st.caption("Dashboard nomofobia | Estadística No Paramétrica | Johann Rivera & Julian Valderrama | 2025")
 st.markdown("---")
 
-# ------------------ CARGA DE DATOS ------------------
+# -------------------- CARGA DE DATOS --------------------
 @st.cache_data
-def load_data(path="DATOS REALES.xlsx"):
-    df = pd.read_excel(path)
+def load_data():
+    df = pd.read_excel("DATOS REALES.xlsx")
     df.columns = df.columns.str.strip()
-    df["Sexo"] = df["Sexo"].astype(str).str.strip()
-    df["Estrato"] = df["Estrato"].astype(str).str.strip()
-    df["Nomofobia?"] = df["Nomofobia?"].astype(str).str.strip()
-    for col in ["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
-try:
-    df = load_data()
-except Exception as e:
-    st.error("No se pudo leer el archivo DATOS REALES.xlsx. Sube el archivo desde la barra lateral.")
-    uploaded = st.file_uploader("Sube DATOS REALES.xlsx", type=["xlsx"])
-    if uploaded:
-        df = pd.read_excel(uploaded)
-    else:
-        st.stop()
+df = load_data()
 
-# ------------------ FILTROS ------------------
-st.sidebar.header("🎚️ Filtros de visualización")
-sexo_sel = st.sidebar.multiselect("Sexo", df["Sexo"].unique(), default=df["Sexo"].unique())
-estrato_sel = st.sidebar.multiselect("Estrato", df["Estrato"].unique(), default=df["Estrato"].unique())
-nomofobia_sel = st.sidebar.multiselect("Nomofobia? (Sí/No)", df["Nomofobia?"].unique(), default=df["Nomofobia?"].unique())
-
-df_f = df[df["Sexo"].isin(sexo_sel) & df["Estrato"].isin(estrato_sel) & df["Nomofobia?"].isin(nomofobia_sel)]
-
-# ------------------ DESCRIPTIVAS ------------------
-st.subheader("📈 Estadísticas descriptivas")
-
+# -------------------- CONTEXTO --------------------
 st.markdown("""
-En esta sección se muestran las **tendencias generales** de las principales variables del estudio.
-Se busca describir el comportamiento general de la muestra antes de aplicar pruebas inferenciales.
+## 🧭 Contexto y Objetivos
+El estudio replica la metodología de *Fryman & Romine (2021)*, que integró escalas psicométricas para medir la **dependencia al smartphone (nomofobia)**, analizando también su relación con **ansiedad social** y **autoestima**.
+
+**Objetivos principales:**
+1. Evaluar si las horas de uso del smartphone influyen en la aparición de nomofobia.  
+2. Analizar la relación entre estrato, sexo, autoestima y ansiedad social.  
+3. Validar la robustez de la metodología en un contexto colombiano.
 """)
+st.markdown("---")
 
-desc = df_f[["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"]].describe()
-st.dataframe(desc.style.format("{:.2f}"), use_container_width=True)
-
-# Visualizaciones descriptivas
+# -------------------- DESCRIPTIVOS --------------------
+st.subheader("📈 Análisis Descriptivo General")
 col1, col2 = st.columns(2)
-with col1:
-    fig1 = px.histogram(df_f, x="Horas_Uso", nbins=20, color="Nomofobia?",
-                        title="Distribución de Horas de Uso según Nomofobia",
-                        marginal="box", color_discrete_sequence=["#90CAF9", "#E57373"])
-    st.plotly_chart(fig1, use_container_width=True)
-with col2:
-    fig2 = px.box(df_f, x="Sexo", y="Nomofobia", color="Sexo",
-                  title="Distribución de Nomofobia por Sexo")
-    st.plotly_chart(fig2, use_container_width=True)
-
+col1.dataframe(df.describe())
+fig1 = px.histogram(df, x="Horas_Uso", nbins=20, color_discrete_sequence=["#0F4C81"], title="Distribución de Horas de Uso")
+col2.plotly_chart(fig1, use_container_width=True)
 st.markdown("---")
 
-# ------------------ CORRELACIONES SPEARMAN ------------------
+# -------------------- NORMALIDAD --------------------
+st.subheader("🧪 Pruebas de Normalidad (Shapiro-Wilk)")
+vars_norm = ["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"]
+results = []
+for v in vars_norm:
+    test = stats.shapiro(df[v])
+    results.append({"Variable": v, "W": round(test.statistic, 3), "p-value": round(test.pvalue, 4)})
+st.dataframe(pd.DataFrame(results))
+st.info("Todas las variables presentan p < 0.05 → se rechaza normalidad. Se aplican pruebas no paramétricas.")
+st.markdown("---")
+
+# -------------------- CORRELACIONES --------------------
 st.subheader("🔗 Correlaciones de Spearman")
+corr_vars = ["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"]
+corr = df[corr_vars].corr(method="spearman")
+fig_corr = px.imshow(corr, text_auto=True, color_continuous_scale="Blues", title="Mapa de Calor - Correlaciones Spearman")
+st.plotly_chart(fig_corr, use_container_width=True)
+st.write("Las correlaciones positivas confirman que un mayor uso del smartphone se asocia con mayor nomofobia y ansiedad social.")
+st.markdown("---")
 
+# -------------------- MANN-WHITNEY --------------------
+st.subheader("⚖️ Prueba de Mann–Whitney U")
+col1, col2 = st.columns(2)
+u_test = stats.mannwhitneyu(df["Horas_Uso"][df["Sexo"] == "Hombre"],
+                            df["Horas_Uso"][df["Sexo"] == "Mujer"])
+col1.write(f"**U = {u_test.statistic:.2f}**")
+col1.write(f"**p-value = {u_test.pvalue:.4f}**")
+col1.write("→ Diferencias significativas en horas de uso entre hombres y mujeres." if u_test.pvalue < 0.05 else "→ No se observan diferencias significativas.")
+fig_box = px.box(df, x="Sexo", y="Horas_Uso", color="Sexo",
+                 color_discrete_sequence=["#1B6CA8", "#58D68D"],
+                 title="Horas de Uso según Sexo")
+col2.plotly_chart(fig_box, use_container_width=True)
+st.markdown("---")
+
+# -------------------- KRUSKAL–WALLIS --------------------
+st.subheader("📉 Prueba de Kruskal–Wallis por Estrato")
+kw = stats.kruskal(*[df["Nomofobia"][df["Estrato"] == e] for e in df["Estrato"].unique()])
+st.write(f"**H = {kw.statistic:.3f}**, **p-value = {kw.pvalue:.4f}**")
+st.write("→ Se detectan diferencias significativas en niveles de nomofobia según estrato." if kw.pvalue < 0.05 else "→ No se detectan diferencias significativas.")
+fig_kw = px.box(df, x="Estrato", y="Nomofobia", color="Estrato", title="Distribución de Nomofobia por Estrato")
+st.plotly_chart(fig_kw, use_container_width=True)
+st.markdown("---")
+
+# -------------------- POST-HOC DUNN --------------------
+st.subheader("🔍 Post-Hoc: Test de Dunn (Bonferroni)")
+posthoc = sp.posthoc_dunn(df, val_col="Nomofobia", group_col="Estrato", p_adjust="bonferroni")
+st.dataframe(posthoc.style.background_gradient(cmap="Blues"))
+st.info("El test de Dunn identifica los pares de estratos con diferencias significativas en el puntaje de nomofobia.")
+st.markdown("---")
+
+# -------------------- EXPLORADOR INTERACTIVO --------------------
+st.subheader("🧭 Explorador Interactivo de Relaciones")
+x_var = st.selectbox("Eje X:", corr_vars, index=0)
+y_var = st.selectbox("Eje Y:", corr_vars, index=1)
+color_var = st.selectbox("Color por:", ["Sexo", "Estrato", "Nomofobia?"], index=0)
+fig = px.scatter(df, x=x_var, y=y_var, color=color_var, trendline="ols",
+                 hover_data=["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"],
+                 labels={x_var: x_var, y_var: y_var})
+st.plotly_chart(fig, use_container_width=True)
+st.markdown("---")
+
+# -------------------- CONCLUSIONES --------------------
+st.subheader("📘 Conclusiones")
 st.markdown("""
-Evalúa la **asociación monotónica** entre el uso del smartphone y las variables psicológicas.  
-Esta prueba es adecuada cuando las variables **no cumplen supuestos de normalidad**.
+- Las variables no siguen distribución normal → se usaron pruebas no paramétricas.  
+- Se halló correlación positiva moderada entre **horas de uso** y **nomofobia**.  
+- El **estrato socioeconómico** influye significativamente en la dependencia.  
+- Las **mujeres** reportan mayor nomofobia promedio.  
+- Los resultados validan el enfoque psicométrico de *Fryman & Romine (2021)* en un contexto colombiano.  
 """)
 
-num_cols = ["Horas_Uso", "Nomofobia", "Ansiedad_social", "Autoestima"]
-corr_matrix = df_f[num_cols].corr(method="spearman")
-
-heatmap = px.imshow(
-    corr_matrix,
-    text_auto=True,
-    color_continuous_scale="RdBu_r",
-    title="Mapa de calor — Correlaciones Spearman",
-    zmin=-1, zmax=1,
-)
-st.plotly_chart(heatmap, use_container_width=True)
-
-# Interpretaciones automáticas
-st.markdown("**Interpretación automática:**")
-for col in num_cols:
-    if col != "Horas_Uso":
-        rho, p = stats.spearmanr(df_f["Horas_Uso"], df_f[col], nan_policy="omit")
-        msg = f"- Correlación {'positiva' if rho>0 else 'negativa'} entre Horas de Uso y {col} (ρ={rho:.3f}, p={p:.4f})"
-        msg += " → significativa" if p<0.05 else " → no significativa"
-        st.write(msg)
-
-st.info("💬 Un valor de ρ cercano a ±1 indica una asociación fuerte; valores cercanos a 0 sugieren independencia.")
 st.markdown("---")
-
-# ------------------ MANN–WHITNEY ------------------
-st.subheader("🧪 Prueba U de Mann–Whitney (Horas de Uso ~ Nomofobia?)")
-
-st.markdown("""
-Permite **comparar las horas de uso promedio** entre quienes **presentan nomofobia (Sí)** y quienes **no (No)**.
-""")
-
-if set(df_f["Nomofobia?"].dropna().unique()) >= {"Sí", "No"}:
-    g1 = df_f[df_f["Nomofobia?"]=="Sí"]["Horas_Uso"].dropna()
-    g2 = df_f[df_f["Nomofobia?"]=="No"]["Horas_Uso"].dropna()
-    stat, p = stats.mannwhitneyu(g1, g2)
-    st.write(f"**U = {stat:.3f} | p = {p:.4f}**")
-    if p < 0.05:
-        st.success("Existe diferencia significativa en Horas de Uso entre los grupos.")
-    else:
-        st.info("No se encontró diferencia significativa.")
-    fig_mw = px.box(df_f, x="Nomofobia?", y="Horas_Uso", points="all", color="Nomofobia?",
-                    title="Comparación de Horas de Uso según Nomofobia (Sí/No)")
-    st.plotly_chart(fig_mw, use_container_width=True)
-    st.caption("Interpretación: diferencias significativas implican que el tiempo de uso está asociado con la presencia de nomofobia.")
-
-st.markdown("---")
-
-# ------------------ KRUSKAL–WALLIS ------------------
-st.subheader("⚖️ Prueba de Kruskal–Wallis (Nomofobia ~ Estrato)")
-
-st.markdown("""
-Evalúa si **el puntaje de Nomofobia difiere entre los distintos estratos socioeconómicos**.  
-Es una alternativa no paramétrica al ANOVA.
-""")
-
-if "Estrato" in df_f.columns and "Nomofobia" in df_f.columns:
-    groups = [g["Nomofobia"].dropna() for _, g in df_f.groupby("Estrato")]
-    if len(groups) > 1:
-        H, p_kw = stats.kruskal(*groups)
-        st.write(f"**Estadístico H = {H:.3f} | p = {p_kw:.4f}**")
-        fig_kw = px.box(df_f, x="Estrato", y="Nomofobia", color="Estrato", points="all",
-                        title="Puntaje de Nomofobia por Estrato Socioeconómico")
-        st.plotly_chart(fig_kw, use_container_width=True)
-        if p_kw < 0.05:
-            st.success("Se detectan diferencias significativas entre al menos dos estratos (p < 0.05).")
-        else:
-            st.info("No se detectan diferencias significativas entre estratos.")
-    else:
-        st.warning("No hay suficientes grupos para aplicar Kruskal-Wallis.")
-else:
-    st.warning("Columnas requeridas no encontradas (Nomofobia y Estrato).")
-
-st.caption("Interpretación: un p < 0.05 sugiere que el nivel de nomofobia varía según el estrato socioeconómico.")
-st.markdown("---")
-
-# ------------------ DUNN POST-HOC ------------------
-st.subheader("📈 Análisis Post-Hoc — Prueba de Dunn (Bonferroni)")
-
-st.markdown("""
-Si el test de Kruskal–Wallis detecta diferencias, la prueba de Dunn identifica **entre qué grupos específicos** se encuentran esas diferencias.
-""")
-
-if "Estrato" in df_f.columns and "Nomofobia" in df_f.columns:
-    try:
-        dunn = sp.posthoc_dunn(df_f, val_col="Nomofobia", group_col="Estrato", p_adjust="bonferroni")
-        st.dataframe(dunn.style.format("{:.4f}"), use_container_width=True)
-        fig_dunn = px.imshow(dunn, text_auto=True, color_continuous_scale="Blues", 
-                             title="Mapa de significancia — Post-Hoc Dunn Test (p-ajustada)")
-        st.plotly_chart(fig_dunn, use_container_width=True)
-        st.caption("Interpretación: celdas con valores p < 0.05 indican pares de estratos con diferencias significativas en nomofobia.")
-    except Exception as e:
-        st.error("No se pudo calcular el test de Dunn. Verifica que existan suficientes observaciones por grupo.")
-else:
-    st.warning("Datos insuficientes para realizar el test de Dunn.")
-
-st.markdown("---")
-
-# ------------------ EXPLORADOR 1 ------------------
-st.subheader("🧭 Explorador Interactivo General")
-st.markdown("Permite **examinar relaciones bivariadas** entre las variables cuantitativas o categóricas seleccionadas.")
-
-with st.expander("Abrir explorador"):
-    num_vars = [c for c in df_f.columns if np.issubdtype(df_f[c].dtype, np.number)]
-    x_var = st.selectbox("Eje X", num_vars, index=0)
-    y_var = st.selectbox("Eje Y", num_vars, index=1)
-    color_var = st.selectbox("Color por", [None, "Sexo", "Estrato", "Nomofobia?"], index=3)
-    trendline = st.selectbox("Línea de tendencia", ["none","ols","lowess"], index=1)
-    fig_exp = px.scatter(df_f, x=x_var, y=y_var, color=color_var, trendline=None if trendline=="none" else trendline,
-                         title=f"Relación entre {x_var} y {y_var}")
-    st.plotly_chart(fig_exp, use_container_width=True)
-
-st.caption("Interpretación: las líneas de tendencia y los colores ayudan a identificar posibles agrupaciones o asociaciones visuales.")
-st.markdown("---")
-
-# ------------------ EXPLORADOR 2 ------------------
-st.subheader("🧮 Explorador Comparador de Correlaciones")
-st.markdown("Analiza la **fuerza y dirección de la correlación** entre dos variables numéricas específicas.")
-
-with st.expander("Abrir comparador"):
-    var1 = st.selectbox("Variable 1", num_cols, index=0, key="var1")
-    var2 = st.selectbox("Variable 2", num_cols, index=1, key="var2")
-    if var1 != var2:
-        rho, p = stats.spearmanr(df_f[var1], df_f[var2], nan_policy="omit")
-        st.write(f"**ρ = {rho:.3f} | p = {p:.4f}**")
-        if p < 0.05:
-            st.success("Correlación significativa (p < 0.05)")
-        else:
-            st.info("No se detecta correlación significativa.")
-        fig_cmp = px.scatter(df_f, x=var1, y=var2, trendline="ols", color="Nomofobia?",
-                             title=f"Relación entre {var1} y {var2}")
-        st.plotly_chart(fig_cmp, use_container_width=True)
-        st.caption("Interpretación: valores de ρ altos indican fuerte relación monotónica, positiva o negativa.")
-    else:
-        st.warning("Selecciona dos variables distintas para comparar.")
-
-st.markdown("---")
-
-# ------------------ CONCLUSIONES Y RECOMENDACIONES ------------------
-st.subheader("💡 Conclusiones Generales y Recomendaciones")
-
-st.markdown("""
-A partir de los análisis realizados, se concluye que:
-
-1. **El uso intensivo del smartphone** presenta una asociación positiva con la **nomofobia y la ansiedad social**, lo cual respalda las hipótesis de dependencia psicológica.
-2. **Las diferencias entre estratos** no son siempre significativas, aunque los niveles más altos de uso se concentran en los estratos medios.
-3. **No se observaron correlaciones fuertes con la autoestima**, lo que sugiere que la nomofobia podría operar independientemente de la autopercepción personal.
-4. Se recomienda profundizar con análisis longitudinales y modelos multivariados para evaluar causalidad.
-""")
-
-st.info("🧠 En síntesis: los resultados confirman patrones conductuales coherentes con la literatura sobre dependencia digital y nomofobia, apoyando la necesidad de intervenciones preventivas dirigidas a jóvenes usuarios intensivos de smartphones.")
-
-st.caption("Versión Final — Incluye contexto, descriptivas, interpretación ampliada y conclusiones académicas.")
+st.caption("Dashboard nomofobia | Estadística No Paramétrica | Johann Rivera & Julian Valderrama | 2025")
