@@ -128,7 +128,7 @@ if not st.session_state["show_dashboard"]:
 
     if st.button("🚀 Iniciar Análisis"):
         st.session_state["show_dashboard"] = True
-        st.experimental_rerun()
+        st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
